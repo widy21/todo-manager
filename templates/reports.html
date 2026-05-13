@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}已完成事项报告 - Todo Manager{% endblock %}
+{% block content %}
+<section class="hero report-hero">
+    <div>
+        <p class="eyebrow">Report</p>
+        <h1>已完成事项报告</h1>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('index') }}">返回首页</a>
+</section>
+
+<form class="filter-panel" method="get" action="{{ url_for('reports') }}">
+    <label>
+        <span>时间范围</span>
+        <select name="range">
+            <option value="all" {% if range_key == 'all' %}selected{% endif %}>全部</option>
+            <option value="week" {% if range_key == 'week' %}selected{% endif %}>本周</option>
+            <option value="month" {% if range_key == 'month' %}selected{% endif %}>本月</option>
+            <option value="year" {% if range_key == 'year' %}selected{% endif %}>今年</option>
+        </select>
+    </label>
+    <label>
+        <span>分类</span>
+        <select name="category_id">
+            <option value="">全部</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>
+        <span>优先级</span>
+        <select name="priority">
+            <option value="">全部</option>
+            {% for key, item in priority_options.items() %}
+            <option value="{{ key }}" {% if selected_priority == key %}selected{% endif %}>{{ item.label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <button class="btn btn-primary" type="submit">筛选</button>
+</form>
+
+<section class="stats-grid">
+    <div class="stat-card"><span>总完成</span><strong>{{ todos|length }}</strong></div>
+    {% for key, item in priority_options.items() %}
+    <div class="stat-card"><span>{{ item.label }}优先级</span><strong>{{ priority_counts.get(key, 0) }}</strong></div>
+    {% endfor %}
+</section>
+
+<section class="report-panel">
+    <h2>按分类统计</h2>
+    {% for name, count in category_counts.items() %}
+    <div class="bar-row">
+        <span>{{ name }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ (count / max_category_count * 100)|round(0, 'floor') }}%"></div></div>
+        <strong>{{ count }}</strong>
+    </div>
+    {% else %}
+    <p class="empty-text">暂无已完成事项</p>
+    {% endfor %}
+</section>
+
+<div class="table-card">
+    <table>
+        <thead><tr><th>优先级</th><th>标题</th><th>分类</th><th>完成时间</th><th>备注</th></tr></thead>
+        <tbody>
+        {% for todo in todos %}
+        <tr>
+            <td><span class="priority" style="--priority-color: {{ todo.priority_color }}">{{ todo.priority_label }}</span></td>
+            <td><strong>{{ todo.title }}</strong><p>{{ todo.description }}</p></td>
+            <td><span class="category-pill" style="--category-color: {{ todo.category.color }}">{{ todo.category.name }}</span></td>
+            <td>{{ todo.completed_at.strftime('%Y-%m-%d %H:%M') if todo.completed_at else '-' }}</td>
+            <td>{% if todo.deleted_at %}<span class="deleted-badge">已删除</span>{% else %}-{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">暂无已完成事项</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

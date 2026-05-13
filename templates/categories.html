@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}分类管理 - Todo Manager{% endblock %}
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Categories</p>
+    <h1>分类管理</h1>
+</section>
+
+<form class="form-card compact-form" method="post" action="{{ url_for('category_new') }}">
+    <label><span>分类名称 *</span><input name="name" required placeholder="例如：个人、xx项目"></label>
+    <label><span>颜色</span><input type="color" name="color" value="#2563eb"></label>
+    <label><span>排序</span><input type="number" name="sort_order" value="0"></label>
+    <button class="btn btn-primary" type="submit">添加分类</button>
+</form>
+
+<div class="table-card">
+    <table>
+        <thead><tr><th>名称</th><th>颜色</th><th>排序</th><th>关联待办</th><th>编辑</th><th>删除</th></tr></thead>
+        <tbody>
+        {% for category in categories %}
+        <tr>
+            <form method="post" action="{{ url_for('category_edit', id=category.id) }}"></form>
+            <td>
+                <form id="edit-{{ category.id }}" method="post" action="{{ url_for('category_edit', id=category.id) }}">
+                    <input name="name" value="{{ category.name }}" required>
+                </form>
+            </td>
+            <td><input form="edit-{{ category.id }}" type="color" name="color" value="{{ category.color }}"></td>
+            <td><input form="edit-{{ category.id }}" type="number" name="sort_order" value="{{ category.sort_order }}"></td>
+            <td>{{ category.todos|length }}</td>
+            <td><button form="edit-{{ category.id }}" class="btn btn-secondary" type="submit">保存</button></td>
+            <td>
+                <form method="post" action="{{ url_for('category_delete', id=category.id) }}" data-confirm="确定删除这个分类吗？">
+                    <button class="btn btn-danger" type="submit" {% if category.todos %}disabled title="有关联待办，不能删除"{% endif %}>删除</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">暂无分类</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

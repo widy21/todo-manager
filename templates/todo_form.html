@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}{{ '新建待办' if mode == 'new' else '编辑待办' }} - Todo Manager{% endblock %}
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">{{ 'Create' if mode == 'new' else 'Edit' }}</p>
+    <h1>{{ '新建待办' if mode == 'new' else '编辑待办' }}</h1>
+</section>
+
+<form class="form-card" method="post">
+    <label>
+        <span>标题 *</span>
+        <input name="title" required value="{{ todo.title or '' }}" placeholder="例如：完成接口设计">
+    </label>
+    <label>
+        <span>分类 *</span>
+        <select name="category_id" required>
+            <option value="">请选择分类</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if todo.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>
+        <span>优先级 *</span>
+        <select name="priority" required>
+            {% for key, item in priority_options.items() %}
+            <option value="{{ key }}" {% if todo.priority == key %}selected{% endif %}>{{ item.label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <div class="form-row">
+        <label>
+            <span>开始日期</span>
+            <input type="date" name="start_date" value="{{ todo.start_date.isoformat() if todo.start_date else '' }}">
+        </label>
+        <label>
+            <span>结束日期</span>
+            <input type="date" name="end_date" value="{{ todo.end_date.isoformat() if todo.end_date else '' }}">
+        </label>
+    </div>
+    <label>
+        <span>描述</span>
+        <textarea name="description" rows="5" placeholder="补充背景、下一步动作或验收标准">{{ todo.description or '' }}</textarea>
+    </label>
+    <div class="form-actions">
+        <a class="btn btn-secondary" href="{{ url_for('index') }}">取消</a>
+        <button class="btn btn-primary" type="submit">保存</button>
+    </div>
+</form>
+{% endblock %}

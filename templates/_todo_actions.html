@@ -1,0 +1,21 @@
+<div class="actions">
+    {% if todo.status == 'active' %}
+    <form method="post" action="{{ url_for('todo_complete', id=todo.id) }}">
+        <button class="btn btn-success" type="submit">完成</button>
+    </form>
+    <a class="btn btn-secondary" href="{{ url_for('todo_edit', id=todo.id) }}">编辑</a>
+    <form method="post" action="{{ url_for('todo_archive', id=todo.id) }}">
+        <button class="btn btn-muted" type="submit">归档</button>
+    </form>
+    {% elif todo.status == 'archived' %}
+    <form method="post" action="{{ url_for('todo_restore', id=todo.id) }}">
+        <button class="btn btn-success" type="submit">恢复</button>
+    </form>
+    <a class="btn btn-secondary" href="{{ url_for('todo_edit', id=todo.id) }}">编辑</a>
+    {% endif %}
+    {% if not todo.deleted_at %}
+    <form method="post" action="{{ url_for('todo_delete', id=todo.id) }}" data-confirm="确定逻辑删除这个待办吗？">
+        <button class="btn btn-danger" type="submit">删除</button>
+    </form>
+    {% endif %}
+</div>

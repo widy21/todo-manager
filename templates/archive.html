@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}归档待办 - Todo Manager{% endblock %}
+{% block content %}
+<section class="page-header">
+    <p class="eyebrow">Later</p>
+    <h1>归档待办</h1>
+</section>
+<div class="todo-grid">
+    {% for todo in todos %}
+    <article class="todo-card muted-card">
+        <div class="todo-meta">
+            <span class="priority" style="--priority-color: {{ todo.priority_color }}">{{ todo.priority_label }}</span>
+            <span class="category-pill" style="--category-color: {{ todo.category.color }}">{{ todo.category.name }}</span>
+        </div>
+        <h3>{{ todo.title }}</h3>
+        <p>{{ todo.description or '暂无描述' }}</p>
+        <div class="date-line">归档时间：{{ todo.archived_at.strftime('%Y-%m-%d %H:%M') if todo.archived_at else '-' }}</div>
+        {% include '_todo_actions.html' %}
+    </article>
+    {% else %}
+    <div class="empty-panel">暂无归档事项</div>
+    {% endfor %}
+</div>
+{% endblock %}
