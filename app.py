@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from sqlalchemy import case, inspect, or_, text
+from sqlalchemy.exc import IntegrityError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -69,6 +70,10 @@ def hash_password(password):
 
 
 def ensure_default_admin():
+    existing_user = User.query.filter_by(username=current_app_config('ADMIN_USERNAME')).first()
+    if existing_user:
+        return existing_user
+
     existing_user = User.query.order_by(User.id).first()
     if existing_user:
         return existing_user
@@ -81,8 +86,12 @@ def ensure_default_admin():
         is_active=True,
     )
     db.session.add(admin)
-    db.session.commit()
-    return admin
+    try:
+        db.session.commit()
+        return admin
+    except IntegrityError:
+        db.session.rollback()
+        return User.query.filter_by(username=current_app_config('ADMIN_USERNAME')).first()
 
 
 def current_app_config(key):
