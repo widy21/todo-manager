@@ -261,4 +261,4 @@ def test_reverse_proxy_prefix_support(client):
         follow_redirects=False,
     )
     assert response.status_code == 302
-    assert '/todo/login' in response.headers['Location']
+    assert '/todo/login?next=/todo/' == response.headers['Location']

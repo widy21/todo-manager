@@ -32,7 +32,8 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def handle_unauthorized():
-    return redirect(url_for('login', next=request.full_path if request.query_string else request.path))
+    next_path = request.full_path if request.query_string else request.path
+    return redirect(url_for('login', next=with_proxy_prefix(next_path)))
 
 
 def create_app(test_config=None):
@@ -268,7 +269,18 @@ def get_safe_next_url():
     parsed = urlsplit(next_url)
     if parsed.netloc or not next_url.startswith('/'):
         return url_for('index')
-    return next_url
+    return with_proxy_prefix(next_url)
+
+
+def with_proxy_prefix(path):
+    script_root = (request.script_root or '').rstrip('/')
+    if not script_root:
+        return path
+    if path == '/':
+        return f'{script_root}/'
+    if path.startswith(f'{script_root}/') or path == script_root:
+        return path
+    return f'{script_root}{path}'
 
 
 def validate_username(username):
