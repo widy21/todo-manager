@@ -182,6 +182,62 @@ def test_user_isolation_and_admin_access_control(client, app):
     assert '用户B事项'.encode() not in response.data
 
 
+def test_change_password_flow(client):
+    login(client)
+    response = client.post('/password', data={
+        'current_password': 'admin123',
+        'new_password': 'newpass123',
+        'confirm_password': 'newpass123',
+    }, follow_redirects=True)
+    assert '密码已更新'.encode() in response.data
+
+    logout(client)
+    failed = login(client, password='admin123')
+    assert '用户名或密码错误'.encode() in failed.data
+
+    success = login(client, password='newpass123')
+    assert '登录成功'.encode() in success.data
+
+
+def test_user_counts_and_delete_rules(client, app):
+    login(client)
+    create_user(client, username='user_c', display_name='用户C', password='User123_')
+
+    response = client.get('/users')
+    assert '总 0'.encode() in response.data
+
+    logout(client)
+    login(client, username='user_c', password='User123_')
+    category_id = first_category_id(app, username='user_c')
+    create_todo(client, category_id, title='用户C事项')
+    logout(client)
+
+    login(client)
+    response = client.get('/users')
+    assert '用户C'.encode() in response.data
+    assert '总 1'.encode() in response.data
+    assert '待办 1'.encode() in response.data
+
+    with app.app_context():
+        user_c = User.query.filter_by(username='user_c').first()
+        user_c_id = user_c.id
+
+    blocked = client.post(f'/users/{user_c_id}/delete', follow_redirects=True)
+    assert '不能删除'.encode() in blocked.data
+
+    with app.app_context():
+        user_c = db.session.get(User, user_c_id)
+        todo = Todo.query.filter_by(owner_id=user_c_id).first()
+        db.session.delete(todo)
+        Category.query.filter_by(owner_id=user_c_id).delete()
+        db.session.commit()
+
+    deleted = client.post(f'/users/{user_c_id}/delete', follow_redirects=True)
+    assert '用户已删除'.encode() in deleted.data
+    with app.app_context():
+        assert db.session.get(User, user_c_id) is None
+
+
 def test_legacy_data_migrates_to_default_admin(tmp_path):
     database_path = tmp_path / 'legacy.db'
     conn = sqlite3.connect(database_path)

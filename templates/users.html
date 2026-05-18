@@ -23,11 +23,12 @@
     <button class="btn btn-primary" type="submit">创建用户</button>
 </form>
 
-<div class="table-card">
+<div class="table-card users-table">
     <table>
-        <thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>最近登录</th><th>重置密码</th><th>启用 / 禁用</th></tr></thead>
+        <thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>待办统计</th><th>最近登录</th><th>管理操作</th></tr></thead>
         <tbody>
         {% for user in users %}
+        {% set stats = user_stats.get(user.id, {}) %}
         <tr>
             <td><strong>{{ user.username }}</strong></td>
             <td>{{ user.display_name }}</td>
@@ -37,19 +38,32 @@
                     {{ '启用中' if user.is_active else '已禁用' }}
                 </span>
             </td>
+            <td>
+                <div class="stats-inline">
+                    <span class="mini-stat">总 {{ stats.total or 0 }}</span>
+                    <span class="mini-stat">待办 {{ stats.active or 0 }}</span>
+                    <span class="mini-stat">完成 {{ stats.completed or 0 }}</span>
+                    <span class="mini-stat">归档 {{ stats.archived or 0 }}</span>
+                </div>
+            </td>
             <td>{{ user.last_login_at.strftime('%Y-%m-%d %H:%M') if user.last_login_at else '未登录' }}</td>
             <td>
-                <form class="inline-form" method="post" action="{{ url_for('user_reset_password', id=user.id) }}">
-                    <input type="password" name="password" required placeholder="新密码">
-                    <button class="btn btn-secondary" type="submit">重置</button>
-                </form>
-            </td>
-            <td>
-                <form method="post" action="{{ url_for('user_toggle', id=user.id) }}">
-                    <button class="btn {{ 'btn-danger' if user.is_active else 'btn-success' }}" type="submit">
-                        {{ '禁用' if user.is_active else '启用' }}
-                    </button>
-                </form>
+                <div class="user-admin-actions">
+                    <form class="inline-form user-password-form" method="post" action="{{ url_for('user_reset_password', id=user.id) }}">
+                        <input type="password" name="password" required placeholder="输入新密码">
+                        <button class="btn btn-secondary" type="submit">重置密码</button>
+                    </form>
+                    <div class="user-action-row">
+                        <form method="post" action="{{ url_for('user_toggle', id=user.id) }}">
+                            <button class="btn {{ 'btn-danger' if user.is_active else 'btn-success' }}" type="submit">
+                                {{ '禁用' if user.is_active else '启用' }}
+                            </button>
+                        </form>
+                        <form method="post" action="{{ url_for('user_delete', id=user.id) }}" data-confirm="确定删除这个用户吗？仅无待办数据的用户允许删除。">
+                            <button class="btn btn-muted" type="submit" {% if user.id == current_user.id %}disabled title="不能删除当前登录账号"{% endif %}>删除用户</button>
+                        </form>
+                    </div>
+                </div>
             </td>
         </tr>
         {% else %}

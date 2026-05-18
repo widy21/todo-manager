@@ -25,6 +25,7 @@
                 <strong>{{ current_user.display_name }}</strong>
                 <span>{{ current_user.role_label }}</span>
             </div>
+            <a class="btn btn-secondary" href="{{ url_for('password_change') }}">修改密码</a>
             <form method="post" action="{{ url_for('logout') }}">
                 <button class="btn btn-secondary" type="submit">退出登录</button>
             </form>

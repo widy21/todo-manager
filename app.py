@@ -297,6 +297,22 @@ def validate_password(password):
     return None
 
 
+def get_user_todo_stats(users):
+    stats = {}
+    for user in users:
+        total = Todo.query.filter_by(owner_id=user.id).count()
+        active = Todo.query.filter_by(owner_id=user.id, status='active', deleted_at=None).count()
+        completed = Todo.query.filter_by(owner_id=user.id, status='completed').count()
+        archived = Todo.query.filter_by(owner_id=user.id, status='archived', deleted_at=None).count()
+        stats[user.id] = {
+            'total': total,
+            'active': active,
+            'completed': completed,
+            'archived': archived,
+        }
+    return stats
+
+
 def register_routes(app):
     @app.errorhandler(403)
     def forbidden(_error):
@@ -331,6 +347,30 @@ def register_routes(app):
         logout_user()
         flash('已退出登录', 'success')
         return redirect(url_for('login'))
+
+    @app.route('/password', methods=['GET', 'POST'])
+    @login_required
+    def password_change():
+        if request.method == 'POST':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+
+            if not check_password_hash(current_user.password_hash, current_password):
+                flash('当前密码不正确', 'error')
+            elif new_password != confirm_password:
+                flash('两次输入的新密码不一致', 'error')
+            else:
+                password_error = validate_password(new_password)
+                if password_error:
+                    flash(password_error, 'error')
+                else:
+                    current_user.password_hash = hash_password(new_password)
+                    db.session.commit()
+                    flash('密码已更新，请使用新密码继续登录', 'success')
+                    return redirect(url_for('index'))
+
+        return render_template('change_password.html')
 
     @app.route('/')
     @login_required
@@ -552,7 +592,7 @@ def register_routes(app):
     @admin_required
     def users():
         items = User.query.order_by(User.role.desc(), User.created_at.desc(), User.id.desc()).all()
-        return render_template('users.html', users=items)
+        return render_template('users.html', users=items, user_stats=get_user_todo_stats(items))
 
     @app.route('/users/new', methods=['POST'])
     @admin_required
@@ -618,6 +658,24 @@ def register_routes(app):
             user.password_hash = hash_password(password)
             db.session.commit()
             flash('密码已重置', 'success')
+        return redirect(url_for('users'))
+
+    @app.route('/users/<int:id>/delete', methods=['POST'])
+    @admin_required
+    def user_delete(id):
+        user = db.session.get(User, id)
+        if not user:
+            abort(404)
+
+        if user.id == current_user.id:
+            flash('不能删除当前登录账号', 'error')
+        elif Todo.query.filter_by(owner_id=user.id).first():
+            flash('该用户仍有关联待办，不能删除；如需停用请使用禁用功能', 'error')
+        else:
+            Category.query.filter_by(owner_id=user.id).delete()
+            db.session.delete(user)
+            db.session.commit()
+            flash('用户已删除', 'success')
         return redirect(url_for('users'))
 
 
