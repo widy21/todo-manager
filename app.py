@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 from sqlalchemy import case, or_
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import config
 from models import Category, Todo, db
@@ -13,6 +14,8 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
+    # Respect proxy headers so the app can live under a path prefix like /todo.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     db.init_app(app)
 
     @app.context_processor

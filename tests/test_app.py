@@ -108,3 +108,21 @@ def test_date_validation(client, app):
         'end_date': '2026-05-12',
     }, follow_redirects=True)
     assert '开始日期不能晚于结束日期'.encode() in response.data
+
+
+def test_reverse_proxy_prefix_support(client):
+    response = client.get(
+        '/',
+        headers={
+            'X-Forwarded-Proto': 'http',
+            'X-Forwarded-Host': '82.156.157.166',
+            'X-Forwarded-Prefix': '/todo',
+        },
+    )
+    assert response.status_code == 200
+    assert 'href="/todo/"'.encode() in response.data
+    assert 'href="/todo/todo/new"'.encode() in response.data
+    assert 'href="/todo/categories"'.encode() in response.data
+    assert 'href="/todo/reports"'.encode() in response.data
+    assert 'href="/todo/archive"'.encode() in response.data
+    assert 'href="/todo/static/css/style.css"'.encode() in response.data
