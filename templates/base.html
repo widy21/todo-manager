@@ -8,14 +8,32 @@
 </head>
 <body>
     <nav class="topbar">
-        <a class="brand" href="{{ url_for('index') }}">Todo Manager</a>
+        <a class="brand" href="{{ url_for('index') if current_user.is_authenticated else url_for('login') }}">Todo Manager</a>
+        {% if current_user.is_authenticated %}
         <div class="nav-links">
             <a href="{{ url_for('index') }}">首页</a>
             <a href="{{ url_for('todo_new') }}">新建待办</a>
             <a href="{{ url_for('categories') }}">分类管理</a>
             <a href="{{ url_for('reports') }}">报告</a>
             <a href="{{ url_for('archive') }}">归档</a>
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('users') }}">用户管理</a>
+            {% endif %}
         </div>
+        <div class="nav-user">
+            <div class="user-chip">
+                <strong>{{ current_user.display_name }}</strong>
+                <span>{{ current_user.role_label }}</span>
+            </div>
+            <form method="post" action="{{ url_for('logout') }}">
+                <button class="btn btn-secondary" type="submit">退出登录</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="nav-user">
+            <a class="btn btn-primary" href="{{ url_for('login') }}">登录</a>
+        </div>
+        {% endif %}
     </nav>
 
     <main class="page-shell">

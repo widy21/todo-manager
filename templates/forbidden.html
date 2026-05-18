@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}无权限访问 - Todo Manager{% endblock %}
+{% block content %}
+<section class="empty-state-card">
+    <p class="eyebrow">403</p>
+    <h1>无权限访问</h1>
+    <p class="auth-text">当前账号没有这个页面的访问权限。</p>
+    <a class="btn btn-primary" href="{{ url_for('index') if current_user.is_authenticated else url_for('login') }}">返回</a>
+</section>
+{% endblock %}
